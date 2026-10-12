@@ -73,6 +73,13 @@ Create folders lazily. Use stable lowercase run IDs (date plus slug); check coll
 5. ALWAYS ask when several skills/sources plausibly satisfy the same next step, including same-named copies and aliases. Recommend but never silently prefer a source or method. List independent steps separately.
 6. Selection is not execution approval. Present a bounded assignment: skill/source, objective, inputs, exact destinations, allowed tools/operations and outcome. Obtain authorization before generation/dispatch. A direct request naming a skill and bounded artifact operation can authorize it; record actual scope, not inferred future work.
 
+## Choices and Proposals
+
+- Every decision, skill choice and authorization goes through `vscode/askQuestions` with selectable options (`recommended: true` on the top pick, freeform allowed). Never ask the user to type a choice in prose or end a turn with a plain-text "choose one".
+- Option lists are complete: include EVERY registry skill (and discovered global candidate) valid for the current process/substep, plus "other/none". Mark unavailable ones as blocked in the option description; never silently drop skills or show a subset.
+- Always propose a recommendation derived from gathered context (change request, run state, existing artifacts, pending questions, gaps). The option description states the evidence-based rationale rather than a generic skill description.
+- Combine skill choice and authorization in one question set (skill, destination, scope) so a single answer authorizes the bounded assignment.
+
 ## Dispatch
 
 1. Allocate a unique assignment ID. Persist the user's authorization and inputs before dispatch. One approval covers this assignment only, not a phase or chain of skills.
