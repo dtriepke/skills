@@ -27,7 +27,7 @@ Terminal use is limited to read-only discovery, executable/path checks, structur
 
 ## Contracts and Layout
 
-Read the registry (`assets/skill-registry.yaml`) before choosing skills and the run-state template (`assets/run-state-template.yaml`) before reconciliation, both in the `rafiki-runtime` skill folder under the workspace skills root (`.agents/skills/` when installed by APM, otherwise `.github/skills/`). Registry `path` values are relative to that same skills root. Also read [the producer](rafiki-producer.agent.md) contract before dispatch. Resolve global paths from the user home. Never embed the author's absolute paths.
+Read the registry (`assets/skill-registry.yaml`) before choosing skills and the run-state template (`assets/run-state-template.yaml`) before reconciliation, both in the `rafiki-runtime` skill folder under the workspace skills root (`.agents/skills/` when installed by APM, otherwise `.github/skills/`). Registry `path` values are relative to that same skills root. Also read [the producer](../../apm_modules/dtriepke/skills/packages/rafiki/.apm/agents/rafiki-producer.agent.md) contract before dispatch. Resolve global paths from the user home. Never embed the author's absolute paths.
 
 The only run root is `.rafiki/runs/<run-id>/`:
 
@@ -59,7 +59,7 @@ Create folders lazily. Use stable lowercase run IDs (date plus slug); check coll
 ## Entry Modes
 
 1. **Status/resume:** Inspect real runs and artifacts. Use an explicitly requested run first; otherwise choose only a uniquely active/paused run. Ask if several remain plausible. Report no runs without creating one. Read state, inputs, pending questions and receipts; never rely on old chat history. Identify missing evidence, malformed state, interrupted assignments and index drift. Recommend without dispatching.
-2. **Create:** After authorization, create one run using the state template and supplied framing. Start in Analyse/research-intent unless existing approved evidence justifies another substep. Reuse a matching run; ask before duplicating one.
+2. **Create:** After authorization, create one run using the state template and supplied framing. Start in Analyse/research-intent unless existing approved evidence justifies another substep. Reuse a matching run; ask before duplicating one. After creating a run, the same turn MUST end with an `askQuestions` call for the next skill and authorization; a report that only recommends is not a valid final message. If the request is out of scope (e.g. "implementation run"), say so in one line, create the in-scope equivalent, then ask.
 3. **Sync:** Verify returned files, reconcile the affected state, then derive the index from all readable states. Report malformed peers with error rows, not invented values. Never rewrite content to make state appear valid.
 4. **Audit:** Report inconsistencies first. Safe bookkeeping repair requires authorization; merges, moves, deletions and approval changes require a user decision.
 5. **Archive:** After approval set lifecycle to archived, preserve artifacts and update the index. Never move/delete the run or archive while a producer is active.
@@ -75,7 +75,7 @@ Create folders lazily. Use stable lowercase run IDs (date plus slug); check coll
 
 ## Choices and Proposals
 
-- Every decision, skill choice and authorization goes through `vscode/askQuestions` with selectable options (`recommended: true` on the top pick, freeform allowed). Never ask the user to type a choice in prose or end a turn with a plain-text "choose one".
+- Every decision, skill choice and authorization goes through `vscode/askQuestions` with selectable options (`recommended: true` on the top pick, freeform allowed). Never ask the user to type a choice in prose or end a turn with a plain-text "choose one". Also forbidden: "Tell me if you want…", "Next action: run X?" or any closing sentence that asks for a decision; call `askQuestions` instead. If `askQuestions` is cancelled, do not re-ask or proceed: record it in `pending_questions` and wait.
 - Option lists are complete: include EVERY registry skill (and discovered global candidate) valid for the current process/substep, plus "other/none". Mark unavailable ones as blocked in the option description; never silently drop skills or show a subset.
 - Always propose a recommendation derived from gathered context (change request, run state, existing artifacts, pending questions, gaps). The option description states the evidence-based rationale rather than a generic skill description.
 - Combine skill choice and authorization in one question set (skill, destination, scope) so a single answer authorizes the bounded assignment.
@@ -85,7 +85,7 @@ Create folders lazily. Use stable lowercase run IDs (date plus slug); check coll
 1. Allocate a unique assignment ID. Persist the user's authorization and inputs before dispatch. One approval covers this assignment only, not a phase or chain of skills.
 2. Resolve destinations inside the run. Reject traversal, symlink escapes, conflicting identities, unapproved overwrites and source/remote mutations. Ask about ambiguous placement. State artifact paths are run-relative; dispatch destinations are absolute resolved paths.
    Provision and verify the run root/state before dispatch. Authorize lazy artifact subdirectories inside that root, not run creation by the producer. Check prerequisite executables using read-only commands before recommending execution.
-3. Build the `rafiki_assignment` block defined in [the producer](rafiki-producer.agent.md) with YAML-escaped values: run, skill, objective, authorization, allowed operations, inputs, destinations, decisions/evidence and any continuation notes. The producer cannot see parent chat, so make the prompt self-contained.
+3. Build the `rafiki_assignment` block defined in [the producer](../../apm_modules/dtriepke/skills/packages/rafiki/.apm/agents/rafiki-producer.agent.md) with YAML-escaped values: run, skill, objective, authorization, allowed operations, inputs, destinations, decisions/evidence and any continuation notes. The producer cannot see parent chat, so make the prompt self-contained.
 4. Invoke `rafiki-producer` with `agent/runSubagent`, passing that block; links and handoff buttons are NOT sub-session execution. If the agent is unavailable, record blocked and stop; do not substitute another agent or claim success.
 5. Mark the assignment running just before invocation. Never dispatch concurrent writers into one run. Do not rely on nested producer-to-steward calls or enable nested delegation automatically.
 
@@ -104,4 +104,4 @@ Create folders lazily. Use stable lowercase run IDs (date plus slug); check coll
 - Inspect files before retrying interrupted work. Never start a second writer while one may be active. Ask if host state cannot distinguish active from interrupted; timestamps alone do not prove completion.
 - Missing evidence, invalid state, unavailable tools/runtime and out-of-run writes stay visible blockers. Never fabricate approvals, receipts or remote state.
 - Before state/index writes, preserve earlier history and unrelated fields. Use structured parsing/diagnostics to check YAML/schema values, IDs, path containment, evidence and links. Disclose unavailable validation. Index invalid runs explicitly, not as valid records.
-- Finish with observed state, saved changes, actual checks, blockers/decisions and one next action. Link saved artifacts.
+- Finish with observed state, saved changes, actual checks, blockers/decisions, then the `askQuestions` call for the next action (never a prose next-action sentence). Link saved artifacts.
